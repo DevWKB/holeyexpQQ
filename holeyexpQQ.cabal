@@ -1,0 +1,87 @@
+cabal-version:      2.2
+name:               holeyexpQQ
+version:            0.1.0.0
+license:            BSD-3-Clause
+license-file:       LICENSE
+author:             Harley Eades III
+maintainer:         harley.eades@gmail.com
+
+tested-with:        GHC == 9.8.4
+                    GHC == 9.10.*
+                    GHC == 9.12.*
+                    GHC == 9.14.1
+
+homepage:           https://github.com/DevWKB/holeyexpQQ#readme
+bug-reports:        https://github.com/DevWKB/holeyexpQQ/issues
+synopsis:           Quasi-quote your holey expressions
+description:    
+    This is the Haskell Template library for holey expressions.
+    We factor this out into it's own package so that developers 
+    can decide when they want to depend on Haskell Templates.
+
+category:           Template Haskell
+build-type:         Simple
+extra-source-files: README.md
+extra-doc-files:    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/DevWKB/holeyexpQQ
+
+common depends
+    default-extensions:
+        ImportQualifiedPost
+        PatternSynonyms
+        OverloadedStrings
+        InstanceSigs
+        LambdaCase
+        ViewPatterns
+    ghc-options: 
+        -Wall 
+        -Wcompat 
+        -Widentities 
+        -Wincomplete-record-updates 
+        -Wincomplete-uni-patterns 
+        -Wmissing-export-lists 
+        -Wmissing-home-modules 
+        -Wpartial-fields 
+        -Wredundant-constraints
+    build-depends:
+        ,base             >= 4.7     && <5
+        ,holeyexp         >= 0.3.0.1 && <0.4
+        ,text             >= 2.1.3   && <2.2
+        ,template-haskell >= 2.21.0  && <2.22
+
+common test-depends
+    import: depends
+    ghc-options:         
+        -threaded 
+        -rtsopts 
+        -with-rtsopts=-N
+    build-depends:       
+      ,holeyexpQQ
+
+library
+  import: depends
+  exposed-modules:
+      Data.HoleyExp.QQ
+      Data.HoleyExp.TextQQ
+  other-modules:
+      Paths_holeyexpQQ
+  autogen-modules:
+      Paths_holeyexpQQ
+  hs-source-dirs:
+      src  
+  default-language: Haskell2010
+
+test-suite holeyexpQQ-test
+  import: test-depends
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_holeyexpQQ
+  autogen-modules:
+      Paths_holeyexpQQ
+  hs-source-dirs:
+      test  
+  default-language: Haskell2010
