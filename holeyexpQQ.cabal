@@ -36,6 +36,11 @@ common depends
         InstanceSigs
         LambdaCase
         ViewPatterns
+        TypeApplications
+        TypeAbstractions
+        FlexibleContexts
+        FlexibleInstances
+        MultiParamTypeClasses
     ghc-options: 
         -Wall 
         -Wcompat 
@@ -59,7 +64,15 @@ common test-depends
         -rtsopts 
         -with-rtsopts=-N
     build-depends:       
-      ,holeyexpQQ
+      ,holeyexpQQ      
+      ,QuickCheck           >  2.15.0  && < 2.19
+      ,hspec                >= 2.11.17 && < 2.12      
+      ,quickcheck-instances >= 0.3.33  && < 0.5
+      ,megaparsec           >= 9.7.0   && < 9.9
+      ,extra                >= 1.8.1   && < 1.9
+      ,containers           >= 0.7     && < 0.8
+    build-tool-depends: 
+        hspec-discover:hspec-discover
 
 library
   import: depends
@@ -78,8 +91,9 @@ test-suite holeyexpQQ-test
   import: test-depends
   type: exitcode-stdio-1.0
   main-is: Spec.hs
-  other-modules:
+  other-modules:      
       Paths_holeyexpQQ
+      Data.HoleyExp.QQSpec
   autogen-modules:
       Paths_holeyexpQQ
   hs-source-dirs:

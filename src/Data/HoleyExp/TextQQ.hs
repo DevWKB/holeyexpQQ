@@ -1,11 +1,3 @@
-{-# LANGUAGE TemplateHaskellQuotes  #-}
-{-# LANGUAGE QuasiQuotes            #-}
-{-# LANGUAGE TypeApplications       #-}
-{-# LANGUAGE TypeAbstractions       #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# OPTIONS_GHC -Wno-orphans #-}
 {-|
 Module      : TextTemplateQQ
 Description : Quasi-quoters for Text Templates
@@ -32,22 +24,39 @@ Here is an example with a filled hole:
 Today's Temperature: $1{} high/$2{77.3} low
 
 -}
-module Data.HoleyExp.TextQQ () where
+module Data.HoleyExp.TextQQ 
+    (hExp
+    ,he
+    ,unitHExp
+    ,uhe) where
 
-import Data.HoleyExp.HExpInternal
-import Data.HoleyExp.Text (parseHExp)
-import Data.HoleyExp.QQ 
+import Data.HoleyExp.HExpInternal (HExp
+                                  ,Proxy(..) )
+import Data.HoleyExp.Text         (parseHExp)
+import Data.HoleyExp.QQ           (HExpQExp
+                                  ,hExp2QExp ) 
+import Language.Haskell.TH.Quote  (QuasiQuoter (..))
+import Language.Haskell.TH        (Q
+                                  ,Exp)
+import Data.Text                  (Text)
+import Data.Text                  qualified as DT
 
-import Language.Haskell.TH.Quote (QuasiQuoter)
-import Language.Haskell.TH       (Q, Exp)
-import Language.Haskell.TH       qualified as TH
-import Data.Text                 (Text)
-import Data.Text                 qualified as DT
+uhe :: QuasiQuoter
+uhe = unitHExp
 
+unitHExp :: QuasiQuoter
+unitHExp = textHExpPQQ $ textHExp2QExp . Proxy @()
 
-textHExpPQQ :: (HExpQExp Text filling) => Proxy filling QuasiQuoter
-textHExpPQQ = Proxy $ QuasiQuoter {
-    quoteExp  = textHExp2QExp . Proxy . DT.pack
+he :: QuasiQuoter
+he = hExp
+
+hExp :: QuasiQuoter
+hExp = textHExpPQQ $ textHExp2QExp . Proxy @Text
+
+textHExpPQQ :: (Text -> Q Exp)
+            -> QuasiQuoter            
+textHExpPQQ l = QuasiQuoter {
+    quoteExp  = l . DT.pack
    ,quotePat  = undefined
    ,quoteDec  = undefined
    ,quoteType = undefined
@@ -56,18 +65,12 @@ textHExpPQQ = Proxy $ QuasiQuoter {
 textHExp2QExp :: (HExpQExp Text filling)
                   => Proxy filling Text  -- ^ String to parse as a hExp
                   -> Q Exp
-textHExp2QExp = (flip (.) proxy $ \case {
+textHExp2QExp = flip (.) proxy $ \case {
          Right t  -> hExp2QExp t
         ;Left err -> fail $ DT.unpack err
-    })
+    }
     where
         proxy :: (HExpQExp Text filling) 
               => Proxy filling Text 
               -> Either Text (HExp Text filling)
         proxy p@(Proxy @filling _) = parseHExp @filling . runProxy $ p
-
-unitHExpQQ :: QuasiQuoter
-unitHExpQQ = runProxy @() textHExpPQQ
-
-textHExpQQ :: QuasiQuoter
-textHExpQQ = runProxy @Text textHExpPQQ

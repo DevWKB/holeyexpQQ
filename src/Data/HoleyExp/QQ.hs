@@ -7,15 +7,12 @@ Maintainer  : harley.eades@gmail.com
 
 TODO
 -}
-{-# OPTIONS_GHC -Wno-missing-export-lists #-}
-{-# LANGUAGE ScopedTypeVariables          #-}
-{-# LANGUAGE TypeAbstractions             #-}
-{-# LANGUAGE TypeApplications             #-}
-{-# LANGUAGE FlexibleContexts             #-}
-{-# LANGUAGE MultiParamTypeClasses        #-}
-{-# LANGUAGE TypeSynonymInstances         #-}
-{-# LANGUAGE FlexibleInstances            #-}
-module Data.HoleyExp.QQ where
+{- HLINT ignore "Redundant bracket" -}
+module Data.HoleyExp.QQ 
+    (ToQExp(..)
+    ,HExpQExp
+    ,hole2QExp
+    ,hExp2QExp) where
 
 import GHC.Natural                 (Natural)
 import Data.Text                   qualified as DT
@@ -57,6 +54,7 @@ instance ToQExp String where
     toQExp = TH.litE . TH.StringL
 
 instance ToQExp Natural where
+        toQExp :: Natural -> Q Exp
         toQExp = TH.litE . TH.IntegerL . toInteger 
 
 instance ToQExp () where
@@ -73,7 +71,7 @@ instance HExpQExp Text   Text
 hole2QExp :: (HExpQExp text filling) 
           => Proxy text (Hole filling) 
           -> Q Exp
-hole2QExp (Proxy (EmptyHole  i   _)) = appCombinator1 (TH.mkName "hole") (toQExp i)
+hole2QExp (Proxy (EmptyHole  i   _)) = appCombinator1 (TH.mkName "empty") (toQExp i)
 hole2QExp (Proxy (FilledHole i f _)) = 
     appCombinator2 (TH.mkName "filled") (toQExp i) $ toQExp f
 hole2QExp (Proxy (UndefHole i _)) 
@@ -125,12 +123,4 @@ appCombinator2 :: TH.Quote m
                -> m Exp 
 appCombinator2 constName a1 a2 = (TH.varE constName) `TH.appE`  a1 `TH.appE` a2 
 
--- | Apply a combinator to three arguments.
-appCombinator3 :: TH.Quote m 
-               => Name  -- ^ Name of the combinator
-               -> m Exp -- ^ First argument expression
-               -> m Exp -- ^ Second argument expression
-               -> m Exp -- ^ Third argument expression
-               -> m Exp 
-appCombinator3 constName a1 a2 a3 = (TH.varE constName) `TH.appE`  a1 `TH.appE` a2 `TH.appE` a3
 
