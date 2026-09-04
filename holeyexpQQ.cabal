@@ -55,7 +55,7 @@ common depends
         ,base             >= 4.7     && <5
         ,holeyexp         >= 0.3.0.1 && <0.4
         ,text             >= 2.1.3   && <2.2
-        ,template-haskell >= 2.21.0  && <2.22
+        ,template-haskell >= 2.21.0  && <2.25
 
 common test-depends
     import: depends
