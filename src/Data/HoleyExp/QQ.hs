@@ -59,10 +59,16 @@ instance ToQExp String where
 instance ToQExp Natural where
         toQExp = TH.litE . TH.IntegerL . toInteger 
 
+instance ToQExp () where
+    toQExp :: () -> Q Exp
+    toQExp () = TH.conE . TH.mkName $ "()"
+
 instance HExpQExp Text   Int
 instance HExpQExp Text   Double
 instance HExpQExp Text   String
 instance HExpQExp String Text
+instance HExpQExp Text   ()
+instance HExpQExp Text   Text
 
 hole2QExp :: (HExpQExp text filling) 
           => Proxy text (Hole filling) 

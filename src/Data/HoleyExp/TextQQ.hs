@@ -1,7 +1,9 @@
 {-# LANGUAGE TemplateHaskellQuotes  #-}
 {-# LANGUAGE QuasiQuotes            #-}
 {-# LANGUAGE TypeApplications       #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
+{-# LANGUAGE TypeAbstractions       #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-|
@@ -32,41 +34,40 @@ Today's Temperature: $1{} high/$2{77.3} low
 -}
 module Data.HoleyExp.TextQQ () where
 
-import Data.HoleyExp.HExpInternal (runProxy)
+import Data.HoleyExp.HExpInternal
+import Data.HoleyExp.Text (parseHExp)
 import Data.HoleyExp.QQ 
+
 import Language.Haskell.TH.Quote (QuasiQuoter)
 import Language.Haskell.TH       (Q, Exp)
-import qualified Language.Haskell.TH as TH
+import Language.Haskell.TH       qualified as TH
+import Data.Text                 (Text)
+import Data.Text                 qualified as DT
 
 
-{-
-hExp :: (HExpQExp Text filling) => Proxy filling QuasiQuoter
-hExp @filling = Proxy $ QuasiQuoter {
-    quoteExp  = hExp2QExp @filling . Proxy . DT.pack
+textHExpPQQ :: (HExpQExp Text filling) => Proxy filling QuasiQuoter
+textHExpPQQ = Proxy $ QuasiQuoter {
+    quoteExp  = textHExp2QExp . Proxy . DT.pack
    ,quotePat  = undefined
    ,quoteDec  = undefined
    ,quoteType = undefined
 }
 
-hExp2QExp :: (HExpQExp Text filling)
-                  => Proxy filling Text    -- ^ String to parse as a hExp
+textHExp2QExp :: (HExpQExp Text filling)
+                  => Proxy filling Text  -- ^ String to parse as a hExp
                   -> Q Exp
-hExp2QExp @filling = (flip (.) (parseTemplate @filling . runProxy) $ \case {
-         Right t  -> template2QExp t
+textHExp2QExp = (flip (.) proxy $ \case {
+         Right t  -> hExp2QExp t
         ;Left err -> fail $ DT.unpack err
     })
+    where
+        proxy :: (HExpQExp Text filling) 
+              => Proxy filling Text 
+              -> Either Text (HExp Text filling)
+        proxy p@(Proxy @filling _) = parseHExp @filling . runProxy $ p
 
-unitTemplateQQ :: QuasiQuoter
-unitTemplateQQ = runProxy @() textTemplate
+unitHExpQQ :: QuasiQuoter
+unitHExpQQ = runProxy @() textHExpPQQ
 
-textTemplateQQ :: QuasiQuoter
-textTemplateQQ = runProxy @Text textTemplate
-
-instance ToQExp () where
-    toQExp :: () -> Q Exp
-    toQExp () = TH.conE . TH.mkName $ "()"
-
-instance TemplateQExp Text ()
-instance TemplateQExp Text Text
-
--}
+textHExpQQ :: QuasiQuoter
+textHExpQQ = runProxy @Text textHExpPQQ
